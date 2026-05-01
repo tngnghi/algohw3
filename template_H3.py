@@ -50,11 +50,24 @@ class DGraph:
 # Include comments on key lines of code (for, while, if, etc.) to demonstrate
 # your comprehension of the implementation.
 #
-# AI Tool Used: <tool name or "None">
-# Interaction: <description of how the AI tool was used, e.g., prompts given>
-# Verification: <how you verified the correctness of the AI-generated code>
+# AI Tool Used: Deepseek
+# Interaction: understanding the suitable function to use on these graph
+# Verification: i check the information given by testing and running the code
+def DFS_Recursive(graph,s):
+    s.visited = True
+    order.append(s)
+    for v in graph.adjList[s]:
+        if visited[v] == False:
+            DFS_Recursive(graph,v)
+            
+  
 def q1_1(graph: UGraph, N):
-    pass
+    visited = [False] * N
+    order =[]
+    
+    d
+    
+
 
 
 # function header for Q1.2 (Auto & manual grading)
