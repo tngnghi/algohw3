@@ -53,19 +53,22 @@ class DGraph:
 # AI Tool Used: Deepseek
 # Interaction: understanding the suitable function to use on these graph
 # Verification: i check the information given by testing and running the code
-def DFS_Recursive(graph,s):
+
+            
+  
+def q1_1(graph: UGraph, N):
+    visited = [False] * N     #initialize all node as not visited
+    order =[]                 #this will store the order of visited nodes
+    
+    def DFS_Recursive(s):
     s.visited = True
     order.append(s)
     for v in graph.adjList[s]:
         if visited[v] == False:
             DFS_Recursive(graph,v)
             
-  
-def q1_1(graph: UGraph, N):
-    visited = [False] * N
-    order =[]
-    
-    d
+    DFS_Recursive(0)
+    return order
     
 
 
@@ -82,7 +85,17 @@ def q1_1(graph: UGraph, N):
 # Interaction: <description of how the AI tool was used, e.g., prompts given>
 # Verification: <how you verified the correctness of the AI-generated code>
 def q1_2(graph: UGraph, N):
-    pass
+    S = deque()
+    S.append(s)
+    order = []
+    while not S:
+        u = S.pop()
+        order.append(u)
+        if u.visited == False:
+            u.visited = True
+            for v in graph.adjList[u]:
+                S.append(v)
+    return order
 
 
 # ============================================================================
@@ -103,7 +116,7 @@ def q1_2(graph: UGraph, N):
 # Interaction: <description of how the AI tool was used, e.g., prompts given>
 # Verification: <how you verified the correctness of the AI-generated code>
 def q2(graph: UGraph, N):
-    pass
+    
 
 
 # ============================================================================
@@ -273,4 +286,7 @@ def q7(input):
 if __name__ == "__main__":
     # You can test your code here
     # This section will not be evaluated by Gradescope
-    pass
+    edges = [['A','B'],['A','C'],['B','D'],['C','B'],['C','E'],['B','C']]
+    ugraph = UGraph(edges, 5)
+    
+    dgraph = dgraph(edges, 5)
