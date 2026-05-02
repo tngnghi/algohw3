@@ -53,23 +53,29 @@ class DGraph:
 #
 # AI Tool Used: ChatGPT
 # Interaction: I asked for help identifying syntax issues in my recursive DFS and how to structure a nested helper function correctly while keeping my original approach.
-# Verification: I manually checked the recursion flow, confirmed the traversal begins from node 0, and tested the function on a small undirected graph to verify the visit order.
+# Verification: I manually checked the recursion flow, confirmed the traversal begins from node 0, and tested the function on small graphs including disconnected cases.
 def q1_1(graph: UGraph, N):
-    visited = [False] * N      # keep track of which nodes have already been seen
-    order = []                 # store the order in which nodes are visited
+    visited = [False] * N      # keep track of visited vertices
+    order = []                 # store DFS exploration order
 
     def DFS_Recursive(s):
-        visited[s] = True      # mark the current node as visited
-        order.append(s)        # record the current node in DFS order
+        visited[s] = True      # mark current node as visited
+        order.append(s)        # record current node
 
-        # go through neighbors in the same order they appear in the adjacency list
+        # visit neighbors in adjacency-list order
         for v in graph.adjList[s]:
-            # only continue DFS if the neighbor has not been visited yet
             if visited[v] == False:
                 DFS_Recursive(v)
 
-    # DFS is required to start from node 0
-    DFS_Recursive(0)
+    # start DFS from node 0 as required
+    if N > 0 and not visited[0]:
+        DFS_Recursive(0)
+
+    # then continue with any unvisited vertices
+    for i in range(N):
+        if visited[i] == False:
+            DFS_Recursive(i)
+
     return order
 
 
@@ -83,26 +89,38 @@ def q1_1(graph: UGraph, N):
 #
 # AI Tool Used: ChatGPT
 # Interaction: I asked for guidance on converting recursive DFS into iterative DFS using a stack while preserving adjacency-list order.
-# Verification: I compared the output with the recursive DFS on the same graph and checked that nodes were not revisited.
+# Verification: I compared the output with recursive DFS on the same graph and checked disconnected and isolated-vertex cases.
 def q1_2(graph: UGraph, N):
     visited = [False] * N
     order = []
-    stack = [0]   # DFS begins from node 0
 
-    while stack:
-        node = stack.pop()   # remove the most recently added node
+    # process node 0 first, then any remaining disconnected vertices
+    start_nodes = []
+    if N > 0:
+        start_nodes.append(0)
+    for i in range(N):
+        if i != 0:
+            start_nodes.append(i)
 
-        # if the node was already processed earlier, skip it
-        if visited[node]:
+    for start in start_nodes:
+        if visited[start]:
             continue
 
-        visited[node] = True
-        order.append(node)
+        stack = [start]
 
-        # push neighbors in reverse so they are processed in original adjacency order
-        for neighbor in reversed(graph.adjList[node]):
-            if not visited[neighbor]:
-                stack.append(neighbor)
+        while stack:
+            node = stack.pop()
+
+            if visited[node]:
+                continue
+
+            visited[node] = True
+            order.append(node)
+
+            # push in reverse so visit order matches adjacency-list order
+            for neighbor in reversed(graph.adjList[node]):
+                if not visited[neighbor]:
+                    stack.append(neighbor)
 
     return order
 
@@ -351,38 +369,38 @@ class Graph:
 # Include comments on key lines of code to demonstrate your comprehension.
 #
 # AI Tool Used: ChatGPT
-# Interaction: I asked how to implement Prim’s algorithm with a min-heap for a large sparse graph and how to detect disconnected graphs.
-# Verification: I manually checked the result on both a connected example and a disconnected example, confirming the MST savings value and the -1 case.
+# Interaction: I asked how to implement Prim’s algorithm with a min-heap for a large sparse graph and how to handle malformed or mismatched row-count input safely.
+# Verification: I manually tested connected and disconnected graphs and also checked cases where the number of edge rows did not match the declared M value.
 def q6(input):
     if not input or len(input) == 0:
         return -1
 
     N = input[0][0]
-    M = input[0][1]
 
-    # use 1-based indexing because the buildings in the problem are labeled from 1
+    # use the actual rows provided instead of trusting M completely
+    roads = input[1:]
+
     adj = [[] for _ in range(N + 1)]
     total_cost = 0
 
-    # build the undirected weighted graph and also compute the total road cost
-    for i in range(1, M + 1):
-        a, b, c = input[i]
+    # build graph from all provided road rows
+    for row in roads:
+        if len(row) < 3:
+            continue
+
+        a, b, c = row[0], row[1], row[2]
         adj[a].append((b, c))
         adj[b].append((a, c))
         total_cost += c
 
     visited = [False] * (N + 1)
-    min_heap = []
+    min_heap = [(0, 1)]   # start Prim from building 1
     mst_cost = 0
     visited_count = 0
-
-    # start Prim's algorithm from building 1
-    heapq.heappush(min_heap, (0, 1))
 
     while min_heap and visited_count < N:
         cost, node = heapq.heappop(min_heap)
 
-        # skip the node if it has already been included in the MST
         if visited[node]:
             continue
 
@@ -390,12 +408,10 @@ def q6(input):
         visited_count += 1
         mst_cost += cost
 
-        # push all edges that go from the current MST to an unvisited building
         for neighbor, weight in adj[node]:
             if not visited[neighbor]:
                 heapq.heappush(min_heap, (weight, neighbor))
 
-    # if not every building was visited, the graph is disconnected
     if visited_count != N:
         return -1
 
@@ -428,22 +444,35 @@ def q6(input):
 # Include comments on key lines of code to demonstrate your comprehension.
 #
 # AI Tool Used: ChatGPT
-# Interaction: I asked which graph algorithm best checks whether every pair of nodes is within 6 edges in an unweighted graph.
-# Verification: I tested the function on a graph where all nodes were within 6 steps and another graph with disconnected or too-distant nodes.
+# Interaction: I asked which graph algorithm best checks whether every pair of nodes is within 6 edges in an unweighted graph and how to make the input parsing more robust.
+# Verification: I tested the function on connected, disconnected, long-path, and single-node cases.
 def q7(input):
     if not input or len(input) == 0:
         return "Big World!"
 
-    N, K = input[0]
+    first_row = input[0]
+
+    # handle cases where only N is provided or K is inconsistent
+    N = first_row[0]
+    if len(first_row) >= 2:
+        K = first_row[1]
+    else:
+        K = len(input) - 1
+
+    # use the actual friendship rows available
+    friendships = input[1:]
+
     adj = [[] for _ in range(N + 1)]
 
-    # build the friendship graph as an undirected graph
-    for i in range(1, K + 1):
-        a, b = input[i]
+    for row in friendships:
+        if len(row) < 2:
+            continue
+
+        a, b = row[0], row[1]
         adj[a].append(b)
         adj[b].append(a)
 
-    # run BFS from each person to measure shortest path lengths
+    # BFS from every person to check shortest path distances
     for start in range(1, N + 1):
         dist = [-1] * (N + 1)
         queue = deque([start])
@@ -452,7 +481,6 @@ def q7(input):
         while queue:
             node = queue.popleft()
 
-            # once distance 6 is reached, we do not need to expand farther
             if dist[node] == 6:
                 continue
 
@@ -461,7 +489,7 @@ def q7(input):
                     dist[neighbor] = dist[node] + 1
                     queue.append(neighbor)
 
-        # every other person must be reachable in at most 6 steps
+        # every person must be reachable within 6 steps
         for person in range(1, N + 1):
             if dist[person] == -1 or dist[person] > 6:
                 return "Big World!"
